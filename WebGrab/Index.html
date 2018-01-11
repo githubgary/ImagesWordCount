@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="/scripts/jquery.cycle2.min.js"></script>
+    <style>
+        .cycle-slideshow img {
+            height: 400px;
+        }
+        .cycle-slideshow {
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h2>Grab images and word count from Url</h2>
+        <input type="text" id="url" size="75" placeholder="enter url" />
+        <input type="button" value="Grab Content" onclick="GrabContent();" />
+        <div class="cycle-slideshow"
+             data-cycle-fx="scrollHorz"
+             data-cycle-timeout="2500">
+            <div class="cycle-caption"></div>
+        </div>
+        Word Count:<span id="WordCount"></span>
+        <div style="margin-bottom:5px;margin-top:20px;">Top 10 Words</div>
+        
+        <table id="Top10" style="border:1px solid black;"><tr><td>Word</td><td>Count</td></tr></table>
+    </div>
+    <script>
+        var uri = "api/grab?uri=";
+        var imgElementStart = '<img src="';
+        var imgElementEnd = '">';
+
+        function GrabContent() {
+            ClearData();
+
+            // Send an AJAX request via jquery
+            $.getJSON(uri + $('#url').val())
+                .done(function (data) {
+                    // add the images to the jquery cycle carousel
+                    $.each(data.ImageUrls, function (key, item) {
+                        $('.cycle-slideshow').cycle('add', imgElementStart + item + imgElementEnd);
+                    });
+                    // re-initialize carousel
+                    $('.cycle-slideshow').cycle('reinit');
+
+                    // set the word count
+                    $('#WordCount').html(data.WordCount);
+
+                    // set the top 10
+                    $.each(data.TopTen, function (key, item) {
+                        $('#Top10').append('<tr><td>' + item.Key + '</td><td>' + item.Value + '</td></tr>');
+                    });
+                })
+                .fail(function (jqXHR, textStatus, err) {
+                    alert('Error:' + err);
+                });
+        };
+
+        function ClearData() {
+            // remove all slides from carousel
+            var numSlides = $('.cycle-slideshow').data('cycle.opts').slideCount;
+            for (var slide = numSlides-1; slide >= 0; slide--) {
+                $('.cycle-slideshow').cycle('remove', slide);
+            }
+            $('.cycle-slideshow').cycle('reinit');
+
+            $('#WordCount').html('');
+            $('#Top10').html('<tr><td>Word</td><td>Count</td></tr>');
+        }
+    </script>
+</body>
+</html>
